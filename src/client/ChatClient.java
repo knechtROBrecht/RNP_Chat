@@ -6,7 +6,16 @@ import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
+/**
+ * ChatClient welcher sich zu einem ChatServer verbinden kann um so einen
+ * Chatraum beizutreten
+ * 
+ * @author rbernhof
+ *
+ */
 public class ChatClient {
+	
+	private static final int SERVER_PORT = 4567;
 
 	BufferedReader in;
 	PrintWriter out;
@@ -14,6 +23,9 @@ public class ChatClient {
 	JTextField textField = new JTextField(40);
 	JTextArea messageArea = new JTextArea(8, 40);
 
+	/**
+	 * Constructor welcher die GUI eines ChatClients erstellt
+	 */
 	public ChatClient() {
 
 		textField.setEditable(false);
@@ -30,30 +42,50 @@ public class ChatClient {
 		});
 	}
 
+	/**
+	 * Erstellt ein InputDialog und fragt den Benutzer nach der IP Adresse des
+	 * Servers
+	 * 
+	 * @return die Server-Adresse die eingegeben wurde als String
+	 */
 	private String getServerAddress() {
 		return JOptionPane.showInputDialog(frame, "IP Adresse des Servers:", "RNP Aufgabe2 Chatprogramm",
 				JOptionPane.QUESTION_MESSAGE);
 	}
 
+	/**
+	 * Erstellt ein InputDialog und fragt den Benutzer nach dem gewünschtem
+	 * Chatnamen
+	 * 
+	 * @return den gewählten Chatamen der eingegeben wurde als String
+	 */
 	private String getName() {
 		return JOptionPane.showInputDialog(frame, "Bitte Namen wählen:", "Auswahl des Namens",
 				JOptionPane.PLAIN_MESSAGE);
 	}
 
+	/**
+	 * Stell die Verbindung zu einem ChatServer her und wartet dann auf input
+	 * vom Sockel um diesen zu verarbeiten
+	 * 
+	 * @throws IOException
+	 */
 	private void run() throws IOException {
-		
+
 		boolean clientRunning = true;
 
 		String serverAddress = getServerAddress();
 		Socket socket = null;
-		if(serverAddress.contains(":")){
+		if (serverAddress.contains(":")) {
+			System.out.println("lol");
 			String[] frak = serverAddress.split(":");
 			socket = new Socket(frak[0], Integer.parseInt(frak[1]));
-		}else{
-			socket = new Socket(serverAddress, 4567);
+		} else {
+			System.out.println("blub");
+			socket = new Socket(serverAddress, SERVER_PORT);
 		}
 		in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-		//true für autoflush
+		// true für autoflush
 		out = new PrintWriter(socket.getOutputStream(), true);
 
 		while (clientRunning) {
@@ -62,11 +94,11 @@ public class ChatClient {
 				out.println(getName());
 			} else if (line.startsWith(".acc")) {
 				textField.setEditable(true);
-			}else if(line.startsWith(".quit")){
+			} else if (line.startsWith(".quit")) {
 				socket.close();
 				messageArea.append("leaving chatroom. bye!");
 				clientRunning = false;
-			}else {
+			} else {
 				messageArea.append(line + "\n");
 			}
 		}

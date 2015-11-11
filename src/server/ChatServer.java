@@ -2,19 +2,39 @@ package server;
 
 import java.io.*;
 import java.net.*;
-import java.util.HashSet;
+import java.util.HashMap;
 
+/**
+ * hatServer welcher Clientverbindungen annimmt und so einen Chatraum darstellt
+ * 
+ * @author rbernhof
+ *
+ */
 public class ChatServer {
 
 	private static final int SERVER_PORT = 4567;
 
-	private static HashSet<String> clients = new HashSet<String>();
-	private static HashSet<PrintWriter> writers = new HashSet<PrintWriter>();
+	/**
+	 * HashMap mit Namen aller verbundenen Clients als Key und den OutputStreams
+	 * (PrintWriter) als Value
+	 */
+	private static HashMap<String, PrintWriter> clients = new HashMap<String, PrintWriter>();
 
-	public static void main(String[] args) throws Exception {
+	/**
+	 * startet den ChatServer
+	 * 
+	 * @param port
+	 * @throws IOException
+	 */
+	private static void run(int port) throws IOException {
 		System.out.println("starting the Chatserver...");
 		ServerSocket listener = new ServerSocket(SERVER_PORT);
 		System.out.println("Chatserver started!");
+		URL whatismyip = new URL("http://checkip.amazonaws.com");
+		BufferedReader in = new BufferedReader(new InputStreamReader(
+				whatismyip.openStream()));
+		String ip = in.readLine();
+		System.out.println("Server-IP: " + ip);
 		try {
 			while (true) {
 				new ChatWorkerThread(listener.accept()).start();
@@ -24,16 +44,38 @@ public class ChatServer {
 		}
 	}
 
+	public static void main(String[] args) throws Exception {
+		run(SERVER_PORT);
+	}
+
+	/**
+	 * Ist eine Worker-Klasse die zum Client eine Socketverbindung hat und
+	 * empfangene Nachrichten an alle Teilnehmer des ChatRaums weiterleitet
+	 * 
+	 * @author rbernhof
+	 *
+	 */
 	private static class ChatWorkerThread extends Thread {
 		private String name;
 		private Socket socket;
 		private BufferedReader in;
 		private PrintWriter out;
 
+		/**
+		 * Constructor
+		 * 
+		 * @param socket
+		 */
 		public ChatWorkerThread(Socket socket) {
 			this.socket = socket;
 		}
 
+		/**
+		 * Stellt zuerst die Verbindung zum Client her und authentifiziert den
+		 * Namen. Wartet danach auf input vom client und broadcastet den weiter
+		 * an alle Teilnehmer des Chatraums
+		 * 
+		 */
 		public void run() {
 			try {
 				in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
@@ -46,16 +88,14 @@ public class ChatServer {
 						return;
 					}
 					synchronized (clients) {
-						if (!clients.contains(name)) {
+						if (!clients.keySet().contains(name)) {
 							broadcast(name + " hat den Chatraum betreten!");
-							clients.add(name);
+							out.println(".acc");
+							clients.put(name, out);
 							break;
 						}
 					}
 				}
-
-				out.println(".acc");
-				writers.add(out);
 
 				while (true) {
 					String input = in.readLine();
@@ -66,7 +106,7 @@ public class ChatServer {
 						broadcast(name + " hat den Chatraum verlassen");
 						break;
 					} else if (input.equals(".clients")) {
-						for (String client : clients) {
+						for (String client : clients.keySet()) {
 							out.println("user: " + client);
 						}
 					} else {
@@ -81,9 +121,6 @@ public class ChatServer {
 				if (name != null) {
 					clients.remove(name);
 				}
-				if (out != null) {
-					writers.remove(out);
-				}
 				try {
 					socket.close();
 				} catch (IOException e) {
@@ -92,8 +129,13 @@ public class ChatServer {
 			}
 		}
 
+		/**
+		 * Sendet die übergebene Message and alle Teilnehmer des Chatraumes
+		 * 
+		 * @param msg
+		 */
 		public void broadcast(String msg) {
-			for (PrintWriter writer : writers) {
+			for (PrintWriter writer : clients.values()) {
 				writer.println(msg);
 			}
 		}
