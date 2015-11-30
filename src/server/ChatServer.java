@@ -110,13 +110,13 @@ public class ChatServer {
 						broadcast(name + " hat den Chatraum verlassen");
 						break;
 					} else if (input.equals(".clients")) {
-						String clientsString = "";
+						String clientsString = ".clients ";
 						for (String client : clients.keySet()) {
 							clientsString = clientsString + client + "; ";
 						}
 						out.println(clientsString);
 					} else if (input.startsWith(".message")) {
-						broadcast(name + ": " + input.substring(9, input.length()));
+						broadcast(".message " + name + ": " + input.substring(9, input.length()));
 					}else{
 						return;
 					}
