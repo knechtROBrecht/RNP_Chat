@@ -89,28 +89,36 @@ public class ChatServer {
 					}
 					synchronized (clients) {
 						if (!clients.keySet().contains(name)) {
-							broadcast(name + " hat den Chatraum betreten!");
-							out.println(".acc");
+							out.println(".ack");
+							broadcast(".new");
+							broadcast(".message " + name + " hat den Chatraum betreten!");
 							clients.put(name, out);
 							break;
+						}else{
+							out.println(".authfail");
 						}
 					}
 				}
+				System.out.println("nachm auth");
 
 				while (true) {
+					System.out.println("true schleife");
 					String input = in.readLine();
 					if (input == null) {
 						return;
 					} else if (input.equals(".quit")) {
-						out.println(".quit");
 						broadcast(name + " hat den Chatraum verlassen");
 						break;
 					} else if (input.equals(".clients")) {
+						String clientsString = "";
 						for (String client : clients.keySet()) {
-							out.println("user: " + client);
+							clientsString = clientsString + client + "; ";
 						}
-					} else {
-						broadcast(name + ": " + input);
+						out.println(clientsString);
+					} else if (input.startsWith(".message")) {
+						broadcast(name + ": " + input.substring(9, input.length()));
+					}else{
+						return;
 					}
 
 				}
