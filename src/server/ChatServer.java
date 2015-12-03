@@ -107,6 +107,7 @@ public class ChatServer {
 					if (input == null) {
 						return;
 					} else if (input.equals(".quit")) {
+						broadcast(".quit");
 						broadcast(name + " hat den Chatraum verlassen");
 						break;
 					} else if (input.equals(".clients")) {

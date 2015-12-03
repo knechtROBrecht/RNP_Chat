@@ -146,7 +146,7 @@ public class ChatClient {
 			} else if (line.startsWith(".ack")) {
 				textField.setEditable(true);
 				out.println("clients");
-			} else if (line.startsWith(".new")) {
+			} else if ((line.startsWith(".new")) || (line.startsWith(".quit")) ) {
 				out.println("clients");
 			} else if (line.startsWith(".clients")) {
 				renewClientList(line.substring(9, line.length()));
